@@ -1,5 +1,11 @@
-package com.example.demo.api.user;
+package com.example.demo.api.user.service;
 
+import com.example.demo.api.user.model.User;
+import com.example.demo.api.user.dao.UserDao;
+import com.example.demo.api.user.dto.UserInfo;
+import com.example.demo.api.user.response.UserGetResponse;
+import com.example.demo.api.user.response.UserResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -8,23 +14,17 @@ import java.util.regex.Pattern;
 @Service
 public class UserService {
 
-    private final Map<String,User> userMap;
+    @Autowired
+    private UserDao userDao;
+
     private final Pattern emailPattern= Pattern.compile("^[a-z]+@[a-z]+\\.com$");
 
-    UserService(){
-        userMap = new HashMap<>();
-
-        User user1 = new User("aaa","aaa@mail.com","123");
-        User user2 = new User("bbb","bbb@mail.com","123");
-        User user3 = new User("ccc","ccc@mail.com","123");
-        User user4 = new User("ddd","ddd@mail.com","123");
-
-        userMap.putAll(Map.of(user1.getEmail(), user1,user2.getEmail(),user2, user3.getEmail(), user3,user4.getEmail(),user4));
-    }
+    UserService(){}
 
     public UserGetResponse getResponse(String email) {
         UserResponse rsp = new UserResponse();
-        User responsedUser=new User();
+        UserInfo responsedUser=new UserInfo();
+
         boolean emailIsValid = emailPattern.matcher(email).find();
         if(email.isEmpty()){
             rsp.MISSING_PARAMETER();
@@ -32,9 +32,10 @@ public class UserService {
         if(email.contains(" ") || !emailIsValid){
             rsp.PROBLEM_WITH_THE_PARAMETERS();
         }
-        if(userMap.containsKey(email)) {
-            responsedUser.setEmail(userMap.get(email).getEmail());
-            responsedUser.setName(userMap.get(email).getName());
+        User queryedUser = userDao.getUser(email);
+        if(queryedUser!=null) {
+            responsedUser.setEmail(queryedUser.getEmail());
+            responsedUser.setName(queryedUser.getName());
             rsp.OPERATION_SUCCESSFUL();
         }
         else{
@@ -51,12 +52,18 @@ public class UserService {
         boolean emailIsValid = emailPattern.matcher(newUser.getEmail()).find();
         if(newUser.getEmail().contains(" ") || newUser.getName().isBlank() || newUser.getPassword().contains(" ") || !emailIsValid){
             rsp.PROBLEM_WITH_THE_PARAMETERS();
+            return rsp;
         }
-        else if (userMap.containsKey(newUser.getEmail())) {
+        User queryedUser = userDao.getUser(newUser.getEmail());
+        if (queryedUser!=null) {
             rsp.EMAIL_ALREADY_EXISTS();
+            return rsp;
         }
-        else rsp.OPERATION_SUCCESSFUL();
-        return rsp;
+        else{
+            rsp.OPERATION_SUCCESSFUL();
+            userDao.addUser(newUser);
+            return rsp;
+        }
     }
     public UserResponse putResponse(String email,User newUser){
         UserResponse rsp = new UserResponse();
@@ -68,15 +75,22 @@ public class UserService {
         }
         if(email.contains(" ")|| newUser.getName().isBlank()||newUser.getEmail().contains(" ")||newUser.getPassword().contains(" ")||!emailIsValid||!newEmailIsValid){
             rsp.PROBLEM_WITH_THE_PARAMETERS();
+            return rsp;
         }
-        else if (userMap.containsKey(email)) {
-            if(!Objects.equals(userMap.get(email).getPassword(),newUser.getPassword())) {
+        User queryedUser = userDao.getUser(newUser.getEmail());
+        if (queryedUser!=null) {
+            if(!Objects.equals(queryedUser.getPassword(),newUser.getPassword())) {
                 rsp.PASSWORD_IS_INCORRECT();
+                return rsp;
             }
-            else if(userMap.containsKey(newUser.getEmail())){
+            User existedUser = userDao.getUser(email);
+            if(existedUser!=null){
                 rsp.EMAIL_ALREADY_EXISTS();
             }
-            else rsp.OPERATION_SUCCESSFUL();
+            else {
+                rsp.OPERATION_SUCCESSFUL();
+                userDao.fixUser(email,newUser);
+            }
         }
         else{
             rsp.EMAIL_DOES_NOT_EXIST();
@@ -90,14 +104,19 @@ public class UserService {
             rsp.MISSING_PARAMETER();
             return rsp;
         }
-        else if (email.contains(" ") || password.contains(" ") || !emailIsValid) {
+        if (email.contains(" ") || password.contains(" ") || !emailIsValid) {
             rsp.PROBLEM_WITH_THE_PARAMETERS();
+            return rsp;
         }
-        else if (userMap.containsKey(email)) {
-            if (!Objects.equals(userMap.get(email).getPassword(), password)) {
+        User queryedUser = userDao.getUser(email);
+        if (queryedUser!=null) {
+            if (!Objects.equals(queryedUser.getPassword(), password)) {
                 rsp.PASSWORD_IS_INCORRECT();
             }
-            else rsp.OPERATION_SUCCESSFUL();
+            else {
+                userDao.deleteUser(email);
+                rsp.OPERATION_SUCCESSFUL();
+            }
         } else {
             rsp.EMAIL_DOES_NOT_EXIST();
         }

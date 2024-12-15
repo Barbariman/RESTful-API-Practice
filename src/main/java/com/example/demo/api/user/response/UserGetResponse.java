@@ -1,15 +1,15 @@
-package com.example.demo.api.user;
+package com.example.demo.api.user.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.example.demo.api.user.dto.UserInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 public class UserGetResponse {
     @JsonUnwrapped
     private UserResponse rsp;
 
-    private User data;
+    private UserInfo data;
 
-    public UserGetResponse(UserResponse rsp, User data) {
+    public UserGetResponse(UserResponse rsp, UserInfo data) {
         this.rsp = rsp;
         this.data = data;
     }
@@ -22,11 +22,11 @@ public class UserGetResponse {
         this.rsp = rsp;
     }
 
-    public User getData() {
+    public UserInfo getData() {
         return data;
     }
 
-    public void setData(User data) {
+    public void setData(UserInfo data) {
         this.data = data;
     }
 

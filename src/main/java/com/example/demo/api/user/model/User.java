@@ -1,23 +1,13 @@
-package com.example.demo.api.user;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
+package com.example.demo.api.user.model;
 
 public class User {
     private String name;
 
     private String email;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String password;
 
-    User(){}
-
-    User(String name, String email,String password){
-        this.name=name;
-        this.email=email;
-        this.password=password;
-    }
+    public User(){}
 
     public String getPassword() {
         return password;

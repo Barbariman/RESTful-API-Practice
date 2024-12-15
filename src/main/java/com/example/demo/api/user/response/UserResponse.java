@@ -1,16 +1,11 @@
-package com.example.demo.api.user;
+package com.example.demo.api.user.response;
 
 public class UserResponse {
 
     private Integer rsp_code;
     private String rsp_msg;
 
-    UserResponse(){}
-
-    UserResponse(Integer rsp_code,String rsp_msg){
-        this.rsp_code=rsp_code;
-        this.rsp_msg=rsp_msg;
-    }
+    public UserResponse(){}
 
     public Integer getRsp_code() {
         return rsp_code;
